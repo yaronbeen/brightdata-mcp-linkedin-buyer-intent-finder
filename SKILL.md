@@ -8,7 +8,7 @@ allowed-tools: mcp__brightdata__search_engine, mcp__brightdata__search_engine_ba
 
 ## Mission
 
-Discover **public, user-authored buying signals** on LinkedIn and X. Verify the original post, qualify whether a useful reply is warranted, inspect existing recommendations and competitors, and draft a reply for human review.
+Discover **public, user-authored buying signals** on LinkedIn. Verify the original post, qualify whether a useful reply is warranted, inspect existing recommendations and competitors, and draft a reply for human review.
 
 This skill researches and drafts only. It must never log in, send a connection or DM, like, repost, comment, auto-post, or imply that an action was taken.
 
@@ -23,16 +23,15 @@ This skill researches and drafts only. It must never log in, send a connection o
 
 Use these tools, not guessed or invented tool names:
 
-1. `mcp__brightdata__search_engine_batch` for parallel discovery queries, normally in batches of no more than 10.
-2. `mcp__brightdata__search_engine` for targeted follow-up searches.
-3. `mcp__brightdata__scrape_as_markdown` for the canonical public post URL and relevant competitor/source pages.
-4. `mcp__brightdata__scrape_batch` for independent public URLs when batch scraping is useful.
+1. `mcp__brightdata__search_engine` for discovery and targeted follow-up searches.
+2. `mcp__brightdata__scrape_as_markdown` for the canonical public post URL and relevant competitor/source pages.
+3. `mcp__brightdata__search_engine_batch` and `mcp__brightdata__scrape_batch` are optional accelerators when available.
 
 If a required tool is unavailable or returns no usable evidence, report the limitation and do not fabricate the missing data.
 
 ## Inputs and Defaults
 
-Ask for these when absent: product/category being represented, geography or audience, preferred platform, exclusions, and reply voice. If the user says “all” without detail, use both platforms and ask one concise question only if product context is necessary to judge fit.
+Ask for these when absent: product/category being represented, geography or audience, exclusions, and reply voice. Ask one concise question only if product context is necessary to judge fit.
 
 Defaults:
 
@@ -44,22 +43,19 @@ Defaults:
 
 ## Discovery Strategy
 
-Run platform searches in parallel. Build query families from the user’s product/category:
+Build LinkedIn query families from the user's product/category:
 
 ### Direct buying intent
 
 ```text
 site:linkedin.com/posts (looking for OR recommend OR recommendation OR "any tools" OR vendor OR provider) [category]
 site:linkedin.com/posts (alternative OR switch OR replacing OR "what do you use") [competitor/category]
-site:x.com ("looking for" OR recommend OR recommendation OR "any tools" OR vendor) [category]
-site:twitter.com ("looking for" OR recommend OR recommendation OR "any tools" OR vendor) [category]
 ```
 
 ### Pain and project intent
 
 ```text
 site:linkedin.com/posts ([pain phrase] OR struggling OR bottleneck OR manual OR expensive OR broken) [category]
-site:x.com ([pain phrase] OR struggling OR bottleneck OR manual OR expensive OR broken) [category]
 ```
 
 Use concrete phrase variants, competitor names, job-to-be-done language, and date terms. Avoid broad searches that return generic thought leadership. Add `-jobs -hiring -course -webinar` where supported when those are false positives.
@@ -88,7 +84,7 @@ Freshness tiers:
 
 ## Deduplication
 
-Normalize URLs by removing tracking parameters, trailing slashes, and mobile variants. Deduplicate by canonical URL, platform post ID, and a normalized `(author, first 160 characters)` fingerprint. If the same conversation appears in search results and a thread reply, retain the canonical root post and note the best reply location. Never count a cross-platform repost twice; link both URLs and score independently only when the audiences or intent differ materially.
+Normalize URLs by removing tracking parameters, trailing slashes, and mobile variants. Deduplicate by canonical URL, LinkedIn activity ID, and a normalized `(author, first 160 characters)` fingerprint. If the same conversation appears more than once, retain the canonical root post and note the best reply location.
 
 ## Deterministic Qualification Score
 
@@ -138,7 +134,7 @@ Draft only after qualification and competition checks. The reply must:
 
 - answer the specific question before mentioning any product;
 - add one concrete tactic, diagnostic question, example, or tradeoff;
-- match the platform: LinkedIn is concise and professional; X is direct, conversational, and short;
+- keep the LinkedIn reply concise and professional;
 - use only claims supported by user-provided facts or verified sources;
 - disclose affiliation when naming the represented product;
 - avoid fake personal experience, invented customer results, false scarcity, unverifiable pricing, links unless useful and requested, and “DM me” lead capture;
@@ -160,11 +156,11 @@ Use public information for the stated research purpose only. Do not infer sensit
 Return a concise report with evidence and no implied action:
 
 ```text
-Social buyer-intent report — [UTC timestamp]
-Scope: [platforms, category, freshness window]
+LinkedIn buyer-intent report - [UTC timestamp]
+Scope: LinkedIn, [category], [freshness window]
 Candidates discovered: [n] | verified: [n] | deduplicated: [n]
 
-1. [PRIORITY|QUALIFIED|WATCH|SKIP] — [score]/100 — [platform]
+1. [PRIORITY|QUALIFIED|WATCH|SKIP] - [score]/100 - LinkedIn
 URL: [canonical public URL]
 Posted: [exact date/time or unknown] | Age: [computed or unknown]
 Author context: [public role/company only if relevant]
