@@ -34,7 +34,7 @@ If a required tool is unavailable or returns no usable evidence, report the limi
 
 ## Inputs and Defaults
 
-The product/category and intended buyer are required to judge fit. If either is missing, ask one concise question. Otherwise proceed with these defaults: any geography, exclude hiring/vendor-promotion noise, and use a concise helpful reply voice.
+The product/category and intended buyer are required to judge fit. The user's relationship to the represented product is required before a draft may mention it. Ask one concise question that gathers any missing required context. Otherwise proceed with these defaults: any geography, exclude hiring/vendor-promotion noise, and use a concise helpful reply voice.
 
 Defaults:
 
@@ -43,6 +43,7 @@ Defaults:
 - Search date: use the current date supplied by the runtime, not a hard-coded date.
 - Candidate limit: keep the final report to the strongest 10 candidates unless the user requests more.
 - Public data only; minimize personal data and retain only what is needed for qualification and attribution.
+- Public availability is not permission. Do not claim that this workflow determines legal, contractual, or platform-terms compliance. Use it only where the user is authorized to access and use the data; stop if the requested access is prohibited or authorization is absent.
 
 ## Discovery Strategy
 
@@ -75,7 +76,7 @@ Record, when available:
 - visible replies, recommendations, competitor mentions, and engagement counts;
 - discovery query and scrape timestamp.
 
-Use `unknown` rather than guessing. Relative dates must be converted using the scrape timestamp and labeled as derived. If the date cannot be verified, mark `freshness_unverified`, list it separately if useful, and do not score or draft it.
+Use `unknown` rather than guessing. Convert a relative date only to the precision its label supports and mark it as derived. If a relative range crosses a 3-, 7-, or 14-day boundary, use the older tier. Never manufacture an exact timestamp from a coarse label. If the date cannot prove the post is no more than 14 days old, mark `freshness_unverified`, list it separately if useful, and do not score or draft it.
 
 Freshness tiers:
 
@@ -119,7 +120,7 @@ Disposition:
 - `40-59`: WATCH, do not draft unless requested;
 - `<40`: SKIP.
 
-Posts aged 8-14 days can be no higher than QUALIFIED regardless of score. Any hard exclusion overrides the numeric score: private/gated content, doxxing or sensitive personal data, malicious request, obvious engagement bait or spam, vendor promotion without first-party buying need, no verifiable post date, or age over 14 days.
+Posts aged 8-14 days can be no higher than QUALIFIED regardless of score. Any hard exclusion overrides the numeric score: private/gated content, doxxing or sensitive personal data, malicious request, obvious engagement bait or spam, vendor promotion without first-party buying need, direct fit of 0, a response that would require regulated or high-stakes advice, no verifiable post date, or age over 14 days.
 
 ## Competition Check
 
@@ -128,7 +129,7 @@ Before drafting a PRIORITY or QUALIFIED reply:
 1. Extract every vendor/product named in the post and top relevant replies.
 2. Search the canonical thread for existing recommendations and unanswered objections.
 3. Compare the user’s stated need against alternatives without unsupported feature, pricing, market-share, or performance claims.
-4. Do not pile onto a thread with a repeated recommendation. Add a distinct, evidence-based tactic or mark `no_reply: saturated`.
+4. Do not pile onto a thread with a repeated recommendation. Add a distinct, evidence-based tactic or mark `no_reply: saturated`. A saturated candidate is ineligible for PRIORITY or QUALIFIED, receives no draft, and must be removed from the scored candidate list.
 5. Never attack a competitor. If affiliation exists, disclose it briefly when mentioning the represented product.
 
 ## Reply Drafting Rules
@@ -165,7 +166,7 @@ Candidates discovered: [n] | verified: [n] | deduplicated: [n]
 
 1. [PRIORITY|QUALIFIED|WATCH|SKIP] - [score]/100 - LinkedIn
 URL: [canonical public URL]
-Posted: [exact date/time or unknown] | Age: [computed or unknown]
+Posted: [exact date/time, derived date range, or unknown] | Age: [computed range or unknown]
 Author context: [public role/company only if relevant]
 Intent evidence: [short quote or faithful paraphrase]
 Fit: [why this category can help]
