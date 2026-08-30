@@ -1,7 +1,8 @@
 ---
 name: linkedin-buyer-intent-finder
-description: Find and qualify fresh public buyer-intent posts on LinkedIn, check competing recommendations, and draft helpful replies without posting.
-allowed-tools: mcp__brightdata__search_engine, mcp__brightdata__search_engine_batch, mcp__brightdata__scrape_as_markdown, mcp__brightdata__scrape_batch, Read, Write, Glob, Grep, Task, AskUserQuestion
+description: Find and qualify fresh public buyer-intent posts on LinkedIn, inspect visible competing recommendations, and draft helpful replies for human review. Use when asked to find LinkedIn buying signals, public prospects, recommendation requests, or relevant problem posts.
+license: MIT
+compatibility: Requires Bright Data MCP with search_engine and scrape_as_markdown. Structured LinkedIn extraction is optional.
 ---
 
 # LinkedIn Buyer-Intent Finder
@@ -21,22 +22,24 @@ This skill researches and drafts only. It must never log in, send a connection o
 
 ## Required Bright Data Tools
 
-Use these tools, not guessed or invented tool names:
+Use these host-neutral Bright Data tool names. The host may expose them with an MCP server prefix.
 
-1. `mcp__brightdata__search_engine` for discovery and targeted follow-up searches.
-2. `mcp__brightdata__scrape_as_markdown` for the canonical public post URL and relevant competitor/source pages.
-3. `mcp__brightdata__search_engine_batch` and `mcp__brightdata__scrape_batch` are optional accelerators when available.
+1. `search_engine` for discovery and targeted follow-up searches.
+2. `scrape_as_markdown` for the canonical public post URL and relevant competitor/source pages.
+3. `discover` may be used as an alternative discovery tool when available.
+4. `search_engine_batch` and `scrape_batch` are optional accelerators when exposed by the MCP configuration.
+5. `web_data_linkedin_posts` is an optional structured verifier when the social tool set is enabled. Prefer it when available, but keep the baseline workflow functional without it.
 
 If a required tool is unavailable or returns no usable evidence, report the limitation and do not fabricate the missing data.
 
 ## Inputs and Defaults
 
-Ask for these when absent: product/category being represented, geography or audience, exclusions, and reply voice. Ask one concise question only if product context is necessary to judge fit.
+The product/category and intended buyer are required to judge fit. If either is missing, ask one concise question. Otherwise proceed with these defaults: any geography, exclude hiring/vendor-promotion noise, and use a concise helpful reply voice.
 
 Defaults:
 
-- Search window: last 7 days; include up to 14 days only as a clearly marked secondary tier.
-- Hard cutoff: do not recommend responding to posts older than 30 days.
+- Search window: last 7 days; include 8-14 days only as a clearly marked secondary tier.
+- Hard cutoff: never score or draft for posts older than 14 days.
 - Search date: use the current date supplied by the runtime, not a hard-coded date.
 - Candidate limit: keep the final report to the strongest 10 candidates unless the user requests more.
 - Public data only; minimize personal data and retain only what is needed for qualification and attribution.
@@ -72,14 +75,14 @@ Record, when available:
 - visible replies, recommendations, competitor mentions, and engagement counts;
 - discovery query and scrape timestamp.
 
-Use `unknown` rather than guessing. Relative dates must be converted using the scrape timestamp and labeled as derived. If the date cannot be verified, mark `freshness_unverified` and exclude it from HOT.
+Use `unknown` rather than guessing. Relative dates must be converted using the scrape timestamp and labeled as derived. If the date cannot be verified, mark `freshness_unverified`, list it separately if useful, and do not score or draft it.
 
 Freshness tiers:
 
 - `0-3 days`: HOT candidate if intent and fit are also strong;
 - `4-7 days`: ACTIVE;
-- `8-14 days`: AGING, include only with strong explicit intent;
-- `15-30 days`: ARCHIVE, normally do not draft;
+- `8-14 days`: AGING, include only with strong explicit intent and cap the disposition at QUALIFIED;
+- `15-30 days`: ARCHIVE, do not score or draft;
 - `>30 days` or unverifiable: SKIP.
 
 ## Deduplication
@@ -88,10 +91,10 @@ Normalize URLs by removing tracking parameters, trailing slashes, and mobile var
 
 ## Deterministic Qualification Score
 
-Score every verified candidate from 0-100 using the following fixed formula:
+Score only verified candidates posted within the last 14 days. The rubric is fixed, but its evidence classifications require model judgment. Clamp the final score to the 0-100 range:
 
 ```text
-score = intent + fit + recency + accessibility + conversation - risk
+score = max(0, min(100, intent + fit + recency + accessibility + conversation - risk))
 intent:         0-35
 fit:            0-25
 recency:        0-20
@@ -104,19 +107,19 @@ Apply these bands consistently:
 
 - `intent`: 35 explicit “looking for/recommend/buying”; 25 evaluates alternatives; 15 describes an active project/problem; 5 generic opinion; 0 no need.
 - `fit`: 25 direct product/category match; 15 adjacent job-to-be-done; 5 weak adjacency; 0 mismatch.
-- `recency`: 20 for 0-3 days; 15 for 4-7; 8 for 8-14; 3 for 15-30; 0 unknown or over 30.
+- `recency`: 20 for 0-3 days; 15 for 4-7; 8 for 8-14; 0 for unknown or over 14.
 - `accessibility`: 10 complete public post and author context; 5 partial public evidence; 0 snippet-only or gated.
-- `conversation`: 10 active relevant replies or unanswered question; 5 some relevant discussion; 0 no useful context.
-- `risk`: 20 private/sensitive data, regulated/high-stakes advice, harassment, or clear spam; 10 ambiguous commercial solicitation or suspicious automation; 0 ordinary public discussion.
+- `conversation`: 10 unanswered or only a few useful replies; 5 active but not saturated; 0 saturated or no useful place to add value.
+- `risk`: 20 regulated/high-stakes advice, harassment, sensitive-data exposure, or serious ambiguity; 10 suspicious commercial solicitation or automation; 0 ordinary public discussion.
 
 Disposition:
 
-- `80-100`: PRIORITY, draft a reply;
+- `80-100`: PRIORITY, draft a reply only for posts from the last 7 days;
 - `60-79`: QUALIFIED, draft if the reply adds specific value;
 - `40-59`: WATCH, do not draft unless requested;
 - `<40`: SKIP.
 
-Any hard exclusion overrides the numeric score: private/gated content, doxxing or sensitive personal data, malicious request, obvious engagement bait, or no verifiable post date for a supposedly fresh lead.
+Posts aged 8-14 days can be no higher than QUALIFIED regardless of score. Any hard exclusion overrides the numeric score: private/gated content, doxxing or sensitive personal data, malicious request, obvious engagement bait or spam, vendor promotion without first-party buying need, no verifiable post date, or age over 14 days.
 
 ## Competition Check
 
@@ -171,7 +174,7 @@ Risks/limits: [unknowns, disclosure, access, or privacy notes]
 Draft reply: [text, or “not drafted: reason”]
 ```
 
-Finish with totals by disposition, a list of skipped duplicates, and research limitations. State explicitly: `No posts were published or contacted.`
+Sort scored candidates by descending score, then by freshness, then by lower visible competition. Finish with totals by disposition, unverified candidates listed separately, skipped duplicates, and research limitations. State explicitly: `No posts were published or contacted.`
 
 ## Failure Handling
 
