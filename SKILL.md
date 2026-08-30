@@ -1,5 +1,5 @@
 ---
-name: linkedin-buyer-intent-finder
+name: brightdata-mcp-linkedin-buyer-intent-finder
 description: Find and qualify fresh public buyer-intent posts on LinkedIn, inspect visible competing recommendations, and draft helpful replies for human review. Use when asked to find LinkedIn buying signals, public prospects, recommendation requests, or relevant problem posts.
 license: MIT
 compatibility: Requires Bright Data MCP with search_engine and scrape_as_markdown. Structured LinkedIn extraction is optional.
@@ -64,7 +64,18 @@ site:linkedin.com/posts ([pain phrase] OR struggling OR bottleneck OR manual OR 
 
 Use concrete phrase variants, competitor names, job-to-be-done language, and date terms. Avoid broad searches that return generic thought leadership. Add `-jobs -hiring -course -webinar` where supported when those are false positives.
 
-For each candidate, scrape the original public URL before scoring. Search result snippets are leads, not proof.
+### Filter before verifying
+
+Keep only posts where the author is a first-party buyer expressing intent for the user's product category. Drop, before scraping:
+
+- **Hiring or recruiting:** "we're hiring", "join our team", or looking for a person or role such as an expert, specialist, strategist, freelancer, contractor, or agency. These are a fit only when the user sells that service, not a product.
+- **Reverse-seller prospecting:** the author is offering services and seeking clients (for example, "looking for a brand/client who wants ..."). This is the opposite of buyer intent.
+- **Vendor or competitor promotion:** the post markets a product, including a competitor's. Treat competitor promos as market context, not leads.
+- **Thought leadership and news:** general opinions, tips, or platform news with no first-party need.
+
+Expect to keep only a handful from a broad sweep. A large drop count means the queries were too generic, not that the niche is quiet; report it.
+
+For each surviving candidate, scrape the original public URL before scoring. Search result snippets are leads, not proof.
 
 ## Evidence and Freshness
 
@@ -76,7 +87,7 @@ Record, when available:
 - visible replies, recommendations, competitor mentions, and engagement counts;
 - discovery query and scrape timestamp.
 
-Use `unknown` rather than guessing. Convert a relative date only to the precision its label supports and mark it as derived. If a relative range crosses a 3-, 7-, or 14-day boundary, use the older tier. Never manufacture an exact timestamp from a coarse label. If the date cannot prove the post is no more than 14 days old, mark `freshness_unverified`, list it separately if useful, and do not score or draft it.
+Use `unknown` rather than guessing. Convert a relative date only to the precision its label supports and mark it as derived. If a relative range crosses a 3-, 7-, or 14-day boundary, use the older tier. Never manufacture an exact timestamp from a coarse label. A scraped LinkedIn post page also renders a "More Relevant Posts" feed, so read only the date attached to the primary author block for the requested activity ID and ignore every date inside that feed. If the main post's own date cannot be isolated, or the date cannot prove the post is no more than 14 days old, mark `freshness_unverified`, list it separately if useful, and do not score or draft it.
 
 Freshness tiers:
 
@@ -88,7 +99,7 @@ Freshness tiers:
 
 ## Deduplication
 
-Normalize URLs by removing tracking parameters, trailing slashes, and mobile variants. Deduplicate by canonical URL, LinkedIn activity ID, and a normalized `(author, first 160 characters)` fingerprint. If the same conversation appears more than once, retain the canonical root post and note the best reply location.
+Normalize URLs by removing tracking parameters, trailing slashes, and mobile variants. Deduplicate by canonical URL, LinkedIn activity ID, and a normalized `(author, first 160 characters)` fingerprint. If the same conversation appears more than once, retain the canonical root post and note the best reply location. If identical or near-identical post text appears under different authors, treat it as one coordinated or reposted signal, keep the earliest original, and do not count the copies as separate leads.
 
 ## Deterministic Qualification Score
 
@@ -110,7 +121,7 @@ Apply these bands consistently:
 - `fit`: 25 direct product/category match; 15 adjacent job-to-be-done; 5 weak adjacency; 0 mismatch.
 - `recency`: 20 for 0-3 days; 15 for 4-7; 8 for 8-14; 0 for unknown or over 14.
 - `accessibility`: 10 complete public post and author context; 5 partial public evidence; 0 snippet-only or gated.
-- `conversation`: 10 unanswered or only a few useful replies; 5 active but not saturated; 0 saturated or no useful place to add value.
+- `conversation`: 10 unanswered or only a few useful replies; 5 active but not saturated, or reply and engagement counts are not visible; 0 saturated or no useful place to add value.
 - `risk`: 20 regulated/high-stakes advice, harassment, sensitive-data exposure, or serious ambiguity; 10 suspicious commercial solicitation or automation; 0 ordinary public discussion.
 
 Disposition:
@@ -120,7 +131,9 @@ Disposition:
 - `40-59`: WATCH, do not draft unless requested;
 - `<40`: SKIP.
 
-Posts aged 8-14 days can be no higher than QUALIFIED regardless of score. Any hard exclusion overrides the numeric score: private/gated content, doxxing or sensitive personal data, malicious request, obvious engagement bait or spam, vendor promotion without first-party buying need, direct fit of 0, a response that would require regulated or high-stakes advice, no verifiable post date, or age over 14 days.
+Fit gates the disposition regardless of score: `fit` of 0 is a hard exclusion, and `fit` of 5 (weak adjacency) can be no higher than WATCH and receives no draft. Only `fit` of 15 or more (adjacent job-to-be-done or a direct match) is eligible to draft. This enforces skip-not-stretch: a high-intent post that wants something other than what the user sells is not a lead.
+
+Posts aged 8-14 days can be no higher than QUALIFIED regardless of score. Any hard exclusion overrides the numeric score: private/gated content, doxxing or sensitive personal data, malicious request, obvious engagement bait or spam, vendor promotion without first-party buying need, a hiring or reverse-seller post outside the user's offer, direct fit of 0, a response that would require regulated or high-stakes advice, no verifiable post date, or age over 14 days.
 
 ## Competition Check
 

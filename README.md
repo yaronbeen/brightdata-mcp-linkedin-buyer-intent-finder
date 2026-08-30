@@ -1,4 +1,4 @@
-# linkedin-buyer-intent-finder
+# brightdata-mcp-linkedin-buyer-intent-finder
 
 **What if your next buyer has already posted the brief on LinkedIn?**
 
@@ -20,7 +20,7 @@ Then it does the part a keyword alert skips: it attempts to verify the original 
 
 Public posts where someone has already put a relevant need into words.
 
-The skill looks for buying language and live pain signals, then filters out stale posts, hiring noise, vendor promotions, generic thought leadership, bad fits, and threads where another pitch would add nothing.
+The skill looks for buying language and live pain signals, then filters out stale posts, hiring and recruiting posts, sellers prospecting for their own clients, vendor and competitor promotions, generic thought leadership, bad fits, and threads where another pitch would add nothing.
 
 It does not promise to find every relevant LinkedIn post. Search indexes miss things. LinkedIn hides things. Public pages sometimes arrive with half the useful context missing.
 
@@ -63,7 +63,7 @@ Draft: A concise answer with one practical tradeoff and disclosed affiliation
 - `>30 days`: SKIP.
 - Unverifiable date: `freshness_unverified`. No score. No draft.
 
-Relative dates are used only at the precision the visible label supports. If a range crosses a 3-, 7-, or 14-day boundary, the older tier wins. A coarse label never becomes a made-up timestamp.
+Relative dates are used only at the precision the visible label supports. If a range crosses a 3-, 7-, or 14-day boundary, the older tier wins. A coarse label never becomes a made-up timestamp. Only the main post's own date counts: dates from LinkedIn's "More Relevant Posts" feed are ignored, and if the main date cannot be isolated the post is treated as undated.
 
 ## Can a score override a bad fit?
 
@@ -83,7 +83,9 @@ risk:           0-20 (subtracted)
 
 The rubric weighs intent, fit, recency, accessibility, visible conversation, and risk. The model still has to classify the evidence, so the score is a consistent review framework, not objective truth.
 
-Hard exclusions beat the number every time: private or gated content, sensitive personal data, malicious requests, spam, vendor promotion without first-party buying need, an unverifiable date, age over 14 days, a direct mismatch, a response requiring high-stakes advice, or a saturated thread with nothing new to add.
+Fit is a floor, not just a weight: a weak-adjacency post (fit 5 or below) can never rank above WATCH and never gets a draft, no matter how strong the intent. That is what stops a high-intent post that wants a different thing than you sell from becoming a lead.
+
+Other hard exclusions beat the number every time: private or gated content, sensitive personal data, malicious requests, spam, vendor promotion without first-party buying need, a hiring or reverse-seller post outside your offer, an unverifiable date, age over 14 days, a direct mismatch, a response requiring high-stakes advice, or a saturated thread with nothing new to add.
 
 ## What does "verified" honestly mean?
 
@@ -148,26 +150,26 @@ Do not commit the API key or paste it into logs, screenshots, or issues.
 **Claude Code, across local projects:**
 
 ```bash
-git clone https://github.com/yaronbeen/linkedin-buyer-intent-finder ~/.claude/skills/linkedin-buyer-intent-finder
+git clone https://github.com/yaronbeen/brightdata-mcp-linkedin-buyer-intent-finder ~/.claude/skills/brightdata-mcp-linkedin-buyer-intent-finder
 ```
 
-**Claude Code, one project:** clone into `.claude/skills/linkedin-buyer-intent-finder` inside that project.
+**Claude Code, one project:** clone into `.claude/skills/brightdata-mcp-linkedin-buyer-intent-finder` inside that project.
 
-**OpenCode:** clone into `~/.config/opencode/skills/linkedin-buyer-intent-finder`. OpenCode discovers it through the native `skill` tool.
+**OpenCode:** clone into `~/.config/opencode/skills/brightdata-mcp-linkedin-buyer-intent-finder`. OpenCode discovers it through the native `skill` tool.
 
-**Claude apps:** upload a ZIP whose top-level folder is named `linkedin-buyer-intent-finder` and contains `SKILL.md`, using **+ -> Create skill -> Upload a skill**. A loose `SKILL.md` or a folder ending in `-main` will not package correctly. Code execution and file creation must be enabled; organization settings may require an owner to enable Skills.
+**Claude apps:** upload a ZIP whose top-level folder is named `brightdata-mcp-linkedin-buyer-intent-finder` and contains `SKILL.md`, using **+ -> Create skill -> Upload a skill**. A loose `SKILL.md` or a folder ending in `-main` will not package correctly. Code execution and file creation must be enabled; organization settings may require an owner to enable Skills.
 
 Claude Code normally detects new skills live. Start a new session only if the top-level skills directory did not exist when the session began or the skill is not listed.
 
 ## What do you ask it to do?
 
 ```text
-/linkedin-buyer-intent-finder
+/brightdata-mcp-linkedin-buyer-intent-finder
 find LinkedIn posts from people asking for a CRM this week
 find public LinkedIn posts from agencies struggling with Meta ad creative production
 ```
 
-In OpenCode, ask naturally and let the agent load `linkedin-buyer-intent-finder` through the skill tool.
+In OpenCode, ask naturally and let the agent load `brightdata-mcp-linkedin-buyer-intent-finder` through the skill tool.
 
 The product or category, intended buyer, and your relationship to the represented product are required before the product can appear in a draft. The skill gathers missing context in one concise question. Otherwise it defaults to any geography, excludes hiring and vendor-promotion noise, and uses a concise helpful voice.
 
@@ -256,7 +258,7 @@ No database or persistence layer ships in this repository. Your AI host and MCP 
 
 ### What if I want the same workflow for X?
 
-Use [X Buyer Intent Finder](https://github.com/yaronbeen/x-buyer-intent-finder). This repository supports LinkedIn only.
+Use [X Buyer Intent Finder](https://github.com/yaronbeen/brightdata-mcp-x-buyer-intent-finder). This repository supports LinkedIn only.
 
 ### Does this guarantee legal or platform compliance?
 
